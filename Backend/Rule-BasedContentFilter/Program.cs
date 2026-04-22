@@ -25,6 +25,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+
 builder.Services.AddSwagger();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();

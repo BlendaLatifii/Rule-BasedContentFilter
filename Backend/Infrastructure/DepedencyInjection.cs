@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Infrastructure.Repositories;
+using Infrastructure.Repositories.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure
 {
@@ -6,6 +8,8 @@ namespace Infrastructure
     {
         public static async void AddInfrastructure(this IServiceCollection services)
         {
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IRuleRepository, RuleRepository>();
         }
     }
 }

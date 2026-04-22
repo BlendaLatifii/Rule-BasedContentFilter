@@ -1,0 +1,6 @@
+@Rule_BasedContentFilter_HostAddress = http://localhost:5101
+
+GET {{Rule_BasedContentFilter_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

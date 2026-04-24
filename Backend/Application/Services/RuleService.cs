@@ -1,7 +1,11 @@
 ﻿using Application.DTO;
+using Application.Projections;
 using Application.Services.Interfaces;
-using Domain.Entities;
+using Domain.Exceptions;
+using Infrastructure.Data;
 using Infrastructure.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Application.Services
 {
@@ -10,95 +14,98 @@ namespace Application.Services
 
         private readonly IRuleRepository _ruleRepository;
 
-        public RuleService(IRuleRepository ruleRepository)
+        public RuleService(IRuleRepository ruleRepository, AppDbContext db)
         {
             _ruleRepository = ruleRepository;
         }
 
-        public async Task AddRule(AddRuleDto addRuletDto)
+        public async Task AddRuleAsync(AddRuleDto addRuletDto, CancellationToken cancellationToken)
         {
-            var rule = MapToRuleEntity(addRuletDto);
+            var rule = addRuletDto.MapToRuleEntity();
 
-            await _ruleRepository.AddAsync(rule, CancellationToken.None);
+            await _ruleRepository.AddAsync(rule, cancellationToken);
         }
 
-        public async Task<List<RuleDto>> GetAllRules()
+        private async Task<List<Domain.Entities.Rule>> GetRelevantEnabledRulesToTextAsync(string text, CancellationToken cancellationToken)
         {
-            var rules = await _ruleRepository.GetAllAsync(CancellationToken.None);
+            var rules = await _ruleRepository.Query()
+                .Where(rule => rule.IsEnable && text.Contains(rule.Keyword))
+                .OrderByDescending(r => r.Priority)
+                .ToListAsync(cancellationToken);
 
-            var model = rules.Select(rule => MapToRuleDto(rule)).ToList();
+            return rules;
+        }
+
+        public async Task<List<RuleDto>> GetAllRulesAsync(CancellationToken cancellationToken)
+        {
+            var rules = await _ruleRepository.GetAllAsync(cancellationToken);
+
+            var model = rules.Select(rule => rule.MapToRuleDto()).ToList();
 
             return model;
         }
 
-        public async Task<RuleDto> GetRuleById(Guid id)
+        public async Task<RuleDto> GetRuleByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            var rule = await _ruleRepository.GetByIdAsync(id, CancellationToken.None);
+            var rule = await _ruleRepository.GetByIdAsync(id, cancellationToken);
+
             if (rule == null)
             {
-                throw new Exception("Rule not found");
+                throw new AppNotFoundedException();
             }
 
-            var model = MapToRuleDto(rule);
+            var model = rule.MapToRuleDto();
 
             return model;
         }
 
-        public async Task UpdateRule(Guid id, UpdateRuleDto updateRuleDto)
+        public async Task UpdateRuleAsync(Guid id, UpdateRuleDto updateRuleDto, CancellationToken cancellationToken)
         {
-            var rule = await _ruleRepository.GetByIdAsync(id, CancellationToken.None);
+            var rule = await _ruleRepository.GetByIdAsync(id, cancellationToken);
+
             if (rule == null)
             {
-                throw new Exception("Rule not found");
+                throw new AppNotFoundedException();
             }
 
-            rule = MapUpdateRule(rule, updateRuleDto);
+            rule.UpdateRuleFromDto(updateRuleDto);
 
-            await _ruleRepository.UpdateAsync(rule, CancellationToken.None);
+            await _ruleRepository.UpdateAsync(rule, cancellationToken);
         }
 
-        public async Task DeleteRule(Guid id)
+        public async Task DeleteRuleAsync(Guid id, CancellationToken cancellationToken)
         {
-            var rule = await _ruleRepository.GetByIdAsync(id, CancellationToken.None);
+            var rule = await _ruleRepository.GetByIdAsync(id, cancellationToken);
+
             if (rule == null)
             {
-                throw new Exception("Rule not found");
+                throw new AppNotFoundedException(); ;
             }
 
-            await _ruleRepository.DeleteAsync(rule, CancellationToken.None);
+            await _ruleRepository.DeleteAsync(rule, cancellationToken);
         }
 
-        private Rule MapToRuleEntity(AddRuleDto addRuleDto)
+
+        public async Task<List<MatchedTextDto>> ProcessTextAsync(TextDto textDto, CancellationToken cancellationToken)
         {
-            return new Rule
+            var result = new List<MatchedTextDto>();
+
+            var words = textDto.Text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            var rules = await GetRelevantEnabledRulesToTextAsync(textDto.Text,cancellationToken);
+
+            for (int i = 0; i < words.Length; i++)
             {
-                Keyword = addRuleDto.Keyword,
-                MatchType = addRuleDto.MatchType,
-                Action = addRuleDto.Action,
-                Color = addRuleDto.Color
-            };
-        }
 
-        private RuleDto MapToRuleDto (Rule rule)
-        {
-            return new RuleDto
-            {
-                Id = rule.Id,
-                Keyword = rule.Keyword,
-                MatchType = rule.MatchType,
-                Action = rule.Action,
-                Color = rule.Color
-            };
-        }
+                var match = rules.Where(r => r.Matched(words[i])).OrderBy(r => r.Priority).FirstOrDefault();
 
-        private Rule MapUpdateRule(Rule rule, UpdateRuleDto updateRuleDto)
-        {
-            rule.Keyword = updateRuleDto.Keyword ?? rule.Keyword;
-            rule.MatchType = updateRuleDto.MatchType ?? rule.MatchType;
-            rule.Action = updateRuleDto.Action ?? rule.Action;
-            rule.Color = updateRuleDto.Color ?? rule.Color;
+                if (match is not null)
+                {
+                    result.Add(match.MapToMatchedTextDto(i));
+                }
+            }
 
-            return rule;
+            return result;
         }
 
     }

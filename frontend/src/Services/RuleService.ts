@@ -1,7 +1,9 @@
 import axios from "axios";
-import type { AddRuleDto } from "../Interfaces/AddRule";
-import type { RuleDto } from "../Interfaces/RuleDto";
-import type { UpdateRuleDto } from "../Interfaces/UpdateRule";
+import type { AddRuleDto } from "../Interfaces/Rule/AddRule";
+import type { RuleDto } from "../Interfaces/Rule/RuleDto";
+import type { UpdateRuleDto } from "../Interfaces/Rule/UpdateRule";
+import type { MatchedTextDto } from "../Interfaces/TextProcesing/MatchedTextDto";
+import type { TextDto } from "../Interfaces/TextProcesing/TextDto";
 
 export class RuleService {
     private static baseUrl = "https://localhost:44375/api/Rule";
@@ -26,5 +28,10 @@ export class RuleService {
 
     public static async DeleteRule(id: string): Promise<void> {
        await axios.delete(`${RuleService.baseUrl}/${id}`);
+    }
+
+    public static async ProcessText(textDto: TextDto): Promise<MatchedTextDto[]> {
+      const result = await axios.post(`${RuleService.baseUrl}/ProcessText`,textDto);
+      return result.data;
     }
 }

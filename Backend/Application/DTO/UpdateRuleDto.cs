@@ -8,5 +8,8 @@ namespace Application.DTO
         public MatchTypes? MatchType { get; set; }
         public ActionType? Action { get; set; }
         public string? Color { get; set; }
+        public string? Label { get; set; }
+        public bool? IsEnable { get; set; }
+        public RulePriority? Priority { get; set; }
     }
 }

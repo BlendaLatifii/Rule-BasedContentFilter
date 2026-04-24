@@ -6,7 +6,10 @@ namespace Application.DTO
     {
         public string Keyword { get; set; } = null!;
         public MatchTypes MatchType { get; set; } = MatchTypes.Contains;
-        public ActionType Action { get; set; } = ActionType.ToolTip;
-        public string Color { get; set; } = null!;
+        public ActionType Action { get; set; } = ActionType.Highlight;
+        public string? Color { get; set; }
+        public string? Label { get; set; } 
+        public bool IsEnable { get; set; }
+        public RulePriority Priority { get; set; } = RulePriority.High;
     }
 }

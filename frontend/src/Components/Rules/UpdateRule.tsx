@@ -1,9 +1,10 @@
-import "./Modal.css";
-import type { UpdateRuleDto } from "../Interfaces/UpdateRule";
+import "../Modal.css";
+import type { UpdateRuleDto } from "../../Interfaces/Rule/UpdateRule";
 import { useEffect, useState } from "react";
-import { MatchTypes } from "../Interfaces/MatchTypes";
-import { ActionType } from "../Interfaces/ActionType";
-import { RuleService } from "../Services/RuleService";
+import { MatchTypes } from "../../Interfaces/Rule/MatchTypes";
+import { ActionType } from "../../Interfaces/Rule/ActionType";
+import { RuleService } from "../../Services/RuleService";
+import { RulePriority } from "../../Interfaces/Rule/RulePriority";
 
 interface UpdateRuleProps {
   id: string;
@@ -17,6 +18,8 @@ export default function UpdateRule({ id, closeModal }: UpdateRuleProps){
             matchType:MatchTypes.Contains,
             action:ActionType.Highlight,
             color:"",
+            label:"",
+            isEnable: false
       }as UpdateRuleDto);
 
     const handleSubmit = async(e: React.FormEvent<HTMLFormElement>)=>{
@@ -27,14 +30,32 @@ export default function UpdateRule({ id, closeModal }: UpdateRuleProps){
             closeModal(false)
     }
     
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-         const {name, value} = e.target;
-         setFormData({...formData,  [name]:
-          name === "matchType" || name === "action"
-            ? Number(value)   
-            : value
-        });
+    const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+      
+    const val = name === "matchType" || name === "action" || name === "priority"
+      ? Number(value)
+      : name === "isEnable"
+      ? (e.target as HTMLInputElement).checked
+      : value;
+
+    setFormData(prev => {
+    const updated = { ...prev, [name]: val };
+
+    if (name === "action") {
+      const isHighlight = Number(value) === ActionType.Highlight;
+
+      return {
+        ...updated,
+        color: isHighlight ? prev.color || "#f7ed88" : "",
+        label: isHighlight ? "" : prev.label
+      };
     }
+
+    return updated;
+  });
+ };
 
     const matchTypeOption = Object.keys(MatchTypes)
     .map((key, i) => ({
@@ -51,6 +72,14 @@ export default function UpdateRule({ id, closeModal }: UpdateRuleProps){
       text: ActionType[+key],
     }))
     .filter((x) => x.text != "" && x.text != null);
+
+    const rulePriority = Object.keys(RulePriority)
+    .map((key, i) => ({
+      key: i,
+      value: i,
+      text: RulePriority[+key],
+    }))
+    .filter((x) => x.text != "" && x.text != null);
     
     useEffect(() => {
          if (!id) return;
@@ -62,7 +91,10 @@ export default function UpdateRule({ id, closeModal }: UpdateRuleProps){
            keyword: rule.keyword,
            matchType: rule.matchType,
            action: rule.action,
-           color: rule.color
+           color: rule.color,
+           label: rule.label,
+           isEnable: rule.isEnable,
+           priority: rule.priority
            });
       } catch (err) {
         console.error(err);
@@ -75,6 +107,10 @@ export default function UpdateRule({ id, closeModal }: UpdateRuleProps){
         <>
         <div className="modalBackground">
      <div className="modalContainer">
+      <div className="d-flex justify-content-between">
+            <h4 className=" mx-auto">Edit Rule</h4>
+            <button className = "btn btn-light mb-2" onClick={() => {closeModal(false)}}>X</button>
+      </div>
      <div className="container">
       <div className="mx-auto p-4 border rounded shadow-sm bg-white" style={{ maxWidth: '500px' }}>
         <form onSubmit={handleSubmit}>
@@ -132,28 +168,73 @@ export default function UpdateRule({ id, closeModal }: UpdateRuleProps){
           </div>
 
           <div className="row mb-4 align-items-center">
-            <label htmlFor="color" className="col-sm-4 col-form-label fw-bold text-secondary">Color</label>
-            <div className="col-sm-8 d-flex align-items-center">
+            <label htmlFor="color" className="col-sm-4 col-form-label fw-bold text-secondary">
+               {formData.action === ActionType.Highlight ? "Color" : "Tag"}
+            </label>
+            {formData.action === ActionType.Highlight ?( 
+              <div className="col-sm-8 d-flex align-items-center">
               <input 
                 type="color" 
                 className="form-control form-control-color border-0" 
                 id="color" 
                 name="color"
-                value={formData.color!}
+                value={formData.color || "#f7ed88"}
                 onChange={handleChange}
-                title="Zgjidh ngjyrën"
+                title="Choose color"
               />
               <span className="ms-2 text-muted small"></span>
+            </div>) : (
+              <div className="col-sm-8">
+              <input 
+                type="text" 
+                className="form-control form-control-color border-1 w-100" 
+                id="label" 
+                name="label"
+                value={formData.label!}
+                onChange={handleChange}
+              />
+              </div>)}
+          </div>
+
+          <div className="row mb-3 align-items-center">
+            <label htmlFor="isEnable" className="col-sm-4 col-form-label fw-bold text-secondary">{formData.isEnable ? "Enable" : "Disable"}</label>
+            <div className=" form-check form-switch col-sm-8 ps-5">
+               <input className="form-check-input"
+               type="checkbox" 
+               name="isEnable"
+               role="switch" 
+               id="flexSwitchCheckDefault"
+               checked={formData.isEnable} 
+               onChange={handleChange}/>
+            </div>
+          </div>
+
+          <div className="row mb-3 align-items-center">
+            <label htmlFor="priority" className="col-sm-4 col-form-label fw-bold text-secondary">Priority</label>
+            <div className="col-sm-8">
+              <select 
+                className="form-select" 
+                id="priority"
+                name="priority"
+                value={formData.priority!}
+                onChange={handleChange}
+              >
+                {rulePriority.map((option)=> (
+                     <option key = {option.key} value={option.value}>
+                        {option.text}
+                        </option>
+                ))}
+              </select>
             </div>
           </div>
 
           <hr className="text-muted" />
 
           <div className="d-grid gap-2">
-            <button type="submit" className="btn btn-primary fw-bold py-2" style={{ backgroundColor: '#2563eb' }}>
+            <button type="submit" className="btn btn-primary fw-bold py-2">
               Save Rule
             </button>
-            <button onClick= {() => closeModal(false)} className="btn btn-primary fw-bold py-2" style={{ backgroundColor: '#dd3214' }}>Cancel</button>
+            <button onClick= {() => closeModal(false)} className="btn btn-danger fw-bold py-2">Cancel</button>
           </div>
         </form>
       </div>

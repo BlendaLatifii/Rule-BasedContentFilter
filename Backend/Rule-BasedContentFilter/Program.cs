@@ -3,6 +3,9 @@ using Infrastructure;
 using Infrastructure.Data;
 using Application;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation.AspNetCore;
+using Api.Middleware;
+using Application.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +32,10 @@ builder.Services.AddDbContext<AppDbContext>(x => x.UseSqlServer(builder.Configur
 builder.Services.AddSwagger();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
+builder.Services.AddMvc().AddFluentValidation(opt =>
+{
+    opt.RegisterValidatorsFromAssemblyContaining<AddRuleValidation>();
+});
 
 var app = builder.Build();
 
@@ -43,6 +50,8 @@ app.UseCors("AccessPolicy");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseAppExceptionHandler();
 
 app.MapControllers();
 

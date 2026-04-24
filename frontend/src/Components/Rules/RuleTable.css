@@ -1,0 +1,12 @@
+.color-box{
+ width:20px;
+ height:20px;
+ border-radius:3px;
+ display: inline-block;
+}
+
+.label-box{
+width:40px;
+height:20px;
+background-color: #f7ed88;
+}

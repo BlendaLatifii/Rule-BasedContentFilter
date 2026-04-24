@@ -1,12 +1,11 @@
 ﻿using Application.DTO;
 using Application.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Rule_BasedContentFilter.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class RuleController : ControllerBase
     {
         private readonly IRuleService _ruleService;
@@ -17,43 +16,51 @@ namespace Rule_BasedContentFilter.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddRule(AddRuleDto addRuleDto)
+        public async Task<ActionResult> AddRuleAsync(AddRuleDto addRuleDto,CancellationToken cancellationToken)
         {
-            await _ruleService.AddRule(addRuleDto);
+            await _ruleService.AddRuleAsync(addRuleDto,cancellationToken);
 
             return Ok();
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<RuleDto>>> GetAllRules()
+        public async Task<ActionResult<List<RuleDto>>> GetAllRulesAsync(CancellationToken cancellationToken)
         {
-            var result = await _ruleService.GetAllRules();
+            var result = await _ruleService.GetAllRulesAsync(cancellationToken);
 
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<RuleDto>> GetRuleById(Guid id)
+        public async Task<ActionResult<RuleDto>> GetRuleByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            var result = await _ruleService.GetRuleById(id);
+            var result = await _ruleService.GetRuleByIdAsync(id,cancellationToken);
 
             return Ok(result);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateRule(Guid id, UpdateRuleDto updateRuleDto)
+        public async Task<ActionResult> UpdateRule(Guid id, UpdateRuleDto updateRuleDto, CancellationToken cancellationToken)
         {
-            await _ruleService.UpdateRule(id, updateRuleDto);
+            await _ruleService.UpdateRuleAsync(id, updateRuleDto,cancellationToken);
 
             return Ok();
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteRule(Guid id)
+        public async Task<ActionResult> DeleteRuleAsync(Guid id, CancellationToken cancellationToken)
         {
-            await _ruleService.DeleteRule(id);
+            await _ruleService.DeleteRuleAsync(id, cancellationToken);
 
             return Ok();
+        }
+
+        [HttpPost("[action]")]
+        public async Task<ActionResult<List<MatchedTextDto>>> ProcessTextAsync([FromBody] TextDto textDto, CancellationToken cancellationToken)
+        {
+            var result = await _ruleService.ProcessTextAsync(textDto, cancellationToken);
+
+            return result;
         }
     }
 }

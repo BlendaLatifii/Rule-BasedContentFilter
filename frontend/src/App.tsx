@@ -1,15 +1,14 @@
 import { Route, Routes } from "react-router-dom"
-import AddRule from "./Components/AddRule"
-import RuleTable from "./Components/RuleTable"
+import RuleTable from "./Components/Rules/RuleTable"
+import TextProcessor from "./Components/TextProcessor/TextProcessor"
 
 function App() {
-
-
+  
   return (
     <>
      <Routes>
-          <Route path="/" element={<AddRule closeModal= {false} />} />
-          <Route path="/RuleTable" element={<RuleTable />} />
+          <Route path="/" element={<RuleTable />} />
+          <Route path="/TextProcessor" element={<TextProcessor />} />
      </Routes>
     </>
   )

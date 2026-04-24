@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.Constants;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -11,7 +12,15 @@ namespace Infrastructure.Configuration
             builder.HasKey(x => x.Id);
 
             builder.Property(x => x.Keyword)
-                .IsRequired();
+                .HasMaxLength(Length.Large)
+                .IsRequired(true);
+
+            builder.Property(x => x.Label)
+               .HasMaxLength(Length.Medium)
+               .IsRequired(false);
+
+            builder.Property(x => x.Color)
+              .HasMaxLength(Length.Medium);
         }
     }
 }
